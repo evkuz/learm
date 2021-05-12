@@ -1,10 +1,14 @@
 #include <Servo.h>
+#include "hiwonder.h"
 
+Servo servo1, servo2, servo3, servo4, servo5, servo6;
 
-Servo servo1, servo2, servo3,servo4,servo5,servo6;
+Servo servos [6] = {servo1, servo2, servo3,servo4,servo5,servo6};
 
 int S4_pos, S5_pos;
 int *s1, *s2, *s3, *s4, *s5, *s6;
+byte current_s [6];
+byte delta [6];
 
 #define GET_1_S1_OPEN 60
 #define GET_1_S1_CLOSE 30
@@ -35,12 +39,13 @@ void setup() {
 //++++++++++++++++++++++++ loop 
 void loop() {
   // put your main code here, to run repeatedly:
-  
-  start_pozition();
+  start_position ();
+  //start_pozition();
   delay(1000);
   S4_pos = servo4.read();
   S5_pos = servo5.read();
-  sit_down_pozition (S4_pos,S5_pos);
+  //sit_down_pozition (S4_pos,S5_pos);
+  move_servo(sit_down_position);
   delay(2500);
   horse_stand();
   delay(2000);
@@ -85,6 +90,27 @@ void start_pozition()
   delay(10);
   
 }//start_pozition
+
+
+//+++++++++++++++++++++++++++ start_position with header
+
+void start_position ()
+{
+  servo1.write(hwr_Start_position[0]);
+  delay(10);
+  servo2.write(hwr_Start_position[1]);
+  delay(10);
+  servo3.write(hwr_Start_position[2]);
+  delay(10);
+  servo4.write(hwr_Start_position[3]);
+  delay(10);
+  servo5.write(hwr_Start_position[4]);
+  delay(10);
+  servo6.write(hwr_Start_position[5]);
+  delay(10);
+
+
+}// start_posotion
 //+++++++++++++++++++++++++++ sit_down
 //Присаживаем. Предположительно из начальной позиции
 void sit_down_pozition(int s4_pos, int s5_pos)
@@ -102,9 +128,20 @@ void sit_down_pozition(int s4_pos, int s5_pos)
     
   }
 
-}//sit_down_pozition(
+}//sit_down_pozition
 //+++++++++++++++++++++++++++++++++++
-  /* Прибавляем градус по 1 45 раз.
+/*
+void sit_down_position(void)
+{
+  get_all_servos(); //Получили текущие значения приводов.
+                    // Целевые значения в массиве 
+
+
+
+}
+*/
+//+++++++++++++++++++++++++++++++++++
+  /* Прибавляем градус по 1-у 45 раз.
   Предполагается, что встаем из сидячего положения 
   */
 void stand_up_pozition(int s4_pos, int s5_pos)
@@ -189,15 +226,43 @@ void horse_stand(void)
 */
 void get_all_servos(void)
 {
- *s1 = servo1.read();
- *s2 = servo2.read();
- *s3 = servo3.read();
- *s4 = servo4.read();
- *s5 = servo5.read();
- *s6 = servo6.read();
+ current_s[0] = servo1.read();
+ current_s[1] = servo2.read();
+ current_s[2] = servo3.read();
+ current_s[3] = servo4.read();
+ current_s[4] = servo5.read();
+ current_s[5] = servo6.read();
 }
 
 //+++++++++++++++++++++++++++++++++++
+/* 
+  Задаем значения приращения угла и направление для всех приводов для текущей и целевой позиции
+*/
+void get_curr_delta (byte *pos)
+{
+
+  for (int i=0; i<=5; i++)
+  {
+    if (current_s[i] > pos[i])
+      {
+       delta[i] = current_s[i] - pos[i];
+       DF[i] = -1;
+      }
+    else
+      {
+        delta[i] = pos[i] - current_s[i];
+       DF[i] = 1;
+      }
+  }//for
+
+
+}
+
+
+
+
+
+
 
 /* Определяем текущую позицию и ПЛАВНО переходим в позицию get_1
 
@@ -206,13 +271,16 @@ void get_1_box_position(void)
 {
   get_all_servos();
   int s5_delta;
+  int df ;  // direction_flag
 
-  if (*s5 > GET_1_S5)
+  if (*s5 > GET_1_S5) // Текущая позиция больше, чем целевая
   {
     s5_delta = *s5 - GET_1_S5;
+    DF[4] = -1; // Т.е. идем в обратном направлении
    }
-  else
+  else               // Текущая позиция меньше, чем целевая, идем в прямом направлениии
   { s5_delta = GET_1_S5 - *s5;
+    DF[4]=1;
     }
   
 }//get_1_box_position
@@ -237,15 +305,65 @@ void horse_drink(int s4_pos, int s5_pos)
 
 }//horse_drink
 
-/*void move_sero (Servo srv, *srv_ptr, int delta, int direction)
+
+//+++++++++++++++++++++++++
+/*
+
+Каждый серво отрабатывает свою позицию отдельно, что не есть гуд.
+Нут плавного движения, когда одновременно 2 серво двигаются.
+*/
+void move_servo (byte *pos) // address of position array and direction flag array, текущую позицию вычисляем
 {
-  int fin;
-  fin = *srv_ptr + delta;
-  for (int i=0; i<=fin; i++)
+  int s_pos;
+
+  get_all_servos();
+  get_curr_delta(pos);
+
+
+  
+  for (int i=0; i<=5; i++)
   {
+    s_pos = current_s[i];
+
+    for (int j=0; j<=delta[i] -1; j++)
+    {
+     s_pos = s_pos + 1*DF[i];
+     servos[i].write(s_pos);
+     delay(15);
+    }
     
     }
   
-  }
+}
+//+++++++++++++++++++++++++++++++++++
+
+/*
+Алгоритм :
+Берем самое большое delta и задаем как счетчик цикла внешнего
+А внутри перебираем все приводы.
+Берем снова самое большое и т.д.
+
 
 */
+void move_servo_together (byte *pos) // address of position array and direction flag array, текущую позицию вычисляем
+{
+  int s_pos;
+
+  get_all_servos();
+  get_curr_delta(pos);
+
+  for (int i=0; i<=5; i++)
+  {
+    s_pos = current_s[i];
+
+    if (delta[i] !=0)
+    {
+      s_pos = s_pos + 1*DF[i];
+      servos[i].write(s_pos);
+      delta[i] -= delta[i];
+      delay(15);
+    }
+    
+  }//for
+  
+}
