@@ -1,0 +1,119 @@
+Когда не прошивается avrdude 
+udevadm control --reload-rules
+
+atmel avr developing environment install for ubuntu
+
+https://www.pololu.com/docs/0J31/all
+
+Прошивка AVR (ATMEGA328)
+https://blog.kvv213.com/2019/08/proshivka-avr-atmega328-razlichnymi-programmatorami-v-tom-chisle-i-iz-pod-arduino/
+
+Avrdude - опции запуска и примеры использования
+https://ph0en1x.net/77-avrdude-full-howto-samples-options-gui-linux.html
+
+
+
+evkuz@evkuz-X542BP:~/avr$ hostid
+007f0101
+
+40:9f:38:e2:ad:45
+hostid for mplab xc8 compiler : 1831bf13fe05
+
+avr-libc
+https://www.nongnu.org/avr-libc/
+
+
+https://www.youtube.com/watch?v=WEoWrPKs-YM
+
+
+sudo apt install lzip
+
+cd binutils-2.36.1/
+./configure --prefix=/usr/local --target=avr
+make
+sudo make install
+
+sudo apt install build-essential
+sudo apt-get install gcc-avr avr-libc avrdude
+
+//++++++++
+tar --lzip -xvf gmp-6.2.1.tar.lz
+
+../configure --prefix=/usr/local --target=avr --enable-languages=c,c++ --disable-nls --disable-libssp
+
+configure: error: Building GCC requires GMP 4.2+, MPFR 3.1.0+ and MPC 0.8.0+.
+
+//++++++++++++++++++++++++++++++++++++
+
+cd gmp-6.2.1/
+
+./configure
+...
+  Version:           GNU MP 6.2.1
+  Host type:         excavator-pc-linux-gnu
+  ABI:               64
+  Install prefix:    /usr/local
+  Compiler:          gcc
+  Static libraries:  yes
+  Shared libraries:  yes
+...
+
+make
+make check
+sudo make install
+
+//++++++++++++++++++++++++++++
+
+cd mpfr
+...
+//++++++++++++++++++
+
+cd mpc
+...
+Ругнулась на неправильную версию mpfr и остановилась... 
+Вернулся в mpfr, в файле INSTALL нашел совет установить патчи, установил, как в файле.
+
+заново #<mpfr folder>./configure  
+
+Вернулся в mpc, еще раз ./configure - в этот раз норм.
+//++++++++++++++++++++++++++++++++++++++
+Вернулся в gcc
+cd ~...gcc-11.1.0/build
+
+../configure --prefix=/usr/local --target=avr --enable-languages=c,c++ --disable-nls --disable-libssp
+
+В этот раз скомпилировалось !
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
