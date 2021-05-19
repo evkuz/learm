@@ -29,7 +29,7 @@ get_1 - взять в точке 1
 
 
 void setup() {
-  Serial.begin(9600);
+  Serial.begin(115200);
   // put Learm to initial pozition
   servo1.attach(2);
   servo2.attach(3);
@@ -49,12 +49,14 @@ void loop() {
   start_position ();
 
   delay(1000);
-  S4_pos = servo4.read();
-  S5_pos = servo5.read();
+  //S4_pos = servo4.read();
+  //S5_pos = servo5.read();
 
-  //sit_position(sit_down_position); // Print ount array values passed by pointer
+  //sit_position(sit_down_position); // Print out array values passed by pointer
 
   //sit_down_pozition (S4_pos,S5_pos);
+  //get_all_servos();
+
   //move_servo(sit_down_position);
 
   move_servo_together(sit_down_position);
@@ -62,8 +64,8 @@ void loop() {
   //horse_stand();
   delay(1000);
 
-  S4_pos = servo4.read();
-  S5_pos = servo5.read();
+ // S4_pos = servo4.read();
+  ///S5_pos = servo5.read();
   /*Кривой вариант
    * message = "Servo 4 ";
   itoa(S4_pos, s_pos, 15);  
@@ -86,16 +88,16 @@ void loop() {
  // delay(2000);
 //  servo2.write(0);
 //  delay(2000);
-  S4_pos = servo4.read();
-  S5_pos = servo5.read();
+//  S4_pos = servo4.read();
+ // S5_pos = servo5.read();
  // stand_up_pozition(S4_pos, S5_pos);
  // delay(2500);
  // clamp(servo1.read());
  clamp_open();
- delay(1500);
+ delay(1000);
  servo5.write(servo5.read() +10);
  clamp_catch();
- delay(1500);
+ delay(1000);
 }//loop
 //++++++++++++++++++++++++++++++++++ start 
 // А вообще, на будущее, надо чтобы сначала считывала текущую позицию и 
@@ -260,12 +262,24 @@ void horse_stand(void)
 */
 void get_all_servos(void)
 {
- current_s[0] = servo1.read();
+    String message;
+/* current_s[0] = servo1.read();
  current_s[1] = servo2.read();
  current_s[2] = servo3.read();
  current_s[3] = servo4.read();
  current_s[4] = servo5.read();
  current_s[5] = servo6.read();
+ */
+    for (int i=0; i<=5; i++)
+    {
+
+      current_s[i] = servos[i].read();
+ /*     message = "Current servo ";
+      message += String(i); message += " position ";
+      message += String(current_s[i]); //servos[i].read()
+      Serial.println(message);
+*/
+    }
 }
 
 //+++++++++++++++++++++++++++++++++++
@@ -287,6 +301,7 @@ void get_curr_delta (byte *pos)
         delta[i] = pos[i] - current_s[i];
        DF[i] = 1;
       }
+
   }//for
 
 
@@ -403,12 +418,13 @@ for (int dt=0; dt <= (delta[maxdt] -1); dt++)
 
   for (int i=0; i<=5; i++) // ОБходим все приводы
   {
-    s_pos = current_s[i];
+    s_pos = servos[i].read();
     message = "Current servo ";
     message += String(i); message += " position ";
-    message += String(s_pos);
+    message += String(servos[i].read());
     message += " and delta is "; message += String(delta[i]);
     Serial.println(message);
+
 // Почему-то заканчивает на 23...
 
     if (delta[i] !=0)
@@ -416,7 +432,11 @@ for (int dt=0; dt <= (delta[maxdt] -1); dt++)
       s_pos = s_pos + DF[i];
       servos[i].write(s_pos);
       delta[i] -= 1;
-      delay(15);
+     // delay(15);
+      message = "changed position, delta is ";
+      message += String(DF[i]);
+      Serial.println("changed position");
+
     }
     
   }//for int i=0
