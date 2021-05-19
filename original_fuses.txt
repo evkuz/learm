@@ -1,0 +1,89 @@
+http://code.google.com/p/arduino/wiki/Platforms
+
+avrdude: safemode: Fuses OK (E:FD, H:DA, L:FF)
+
+"1" во fuse означает, что этот бит НЕ запрограммирован, а вот если "0", то fuse "сожжен", т.е. установлен.
+
+
+E = 0xFD = 1111 1101
+                 |||
+BODLEVEL2--------|||	
+BODLEVEL1---------||
+BODLEVEL0----------|
+
+BODLEVEL1 - запрограммирован, т.к. в "0"
+BODLEVEL2,1,0 = 101 => BOD=2.7V
+
+
+Уровень срабатывания детектора понижения напряжения питания	1 (не запрограммирован)
+
+H = 0xDA = 1101 1010
+
+RSTDISBL	7	Выключение внешнего сброса	1 (не запрограммирован)
+DWEN	    6	Включение DebugWire	1 (не запрограммирован)
+SPIEN	    5	Включение последовательного программирования и загрузки данных	0 (запрограммирован, SPI программирование включено)
+WDTON	    4	Сторожевой таймер всегда включен	1 (не запрограммирован)
+EESAVE	    3	Память EEPROM сохраняется при стирании чипа	1 (не запрограммирован), EEPROM не защищена
+BOOTSZ1	    2	Выбор размера области загрузки (смотрите параметры загрузчика)	0 (запрограммирован)
+BOOTSZ0	    1	Выбор размера области загрузки (смотрите параметры загрузчика)	0 (запрограммирован)
+BOOTRST	    0	Выбор вектора сброса	1 (не запрограммирован)
+
+Запрограмммировано
+SPIEN   = 0
+BOOTSZ1 = 0
+BOOTRST	  0
+
+ESSAVE - память EEPROM не сохраняется при стирании чипа (если бит не запрограммирован) ??? -ДА
+The EESAVE=1, not set and eeprom memory is erased during the chip erase cycle when programming.
+eeprom has a limited life cycle so the less you write to it the better. Поэтому лучше - не переписывать каждый раз, когда заливается прошивка.
+Т.е. лучше этот бит установить.
+
+When the BOOTRST Fuse is set, on reset the device will jump to the Boot Loader address. If not set, the chip will jump to the program start address at 0x0000.
+Поэтому - правильно, что фьюз BOOTRST - установлен, значит бутлоадер сработает.
+
+
+
+
+
+L = 0xFF = 1111 1111
+
+
+CKDIV8	7	Делитель на 8	0 (запрограммирован)
+CKOUT	6	Выход тактового сигнала	1 (не запрограммирован)
+SUT1	5	Выбор времени запуска	1 (не запрограммирован)
+SUT0	4	Выбор времени запуска	0 (запрограммирован)
+CKSEL3	3	Выбор источника тактового сигнала	0 (запрограммирован)
+CKSEL2	2	Выбор источника тактового сигнала	0 (запрограммирован)
+CKSEL1	1	Выбор источника тактового сигнала	1 (не запрограммирован)
+CKSEL0	0	Выбор источника тактового сигнала	0 (запрограммирован)
+
+
+
+
+
+На компе в универе Arduino 2.0 установлено в /usr/share/arduino
+
+/usr/share/arduino/hardware/arduino/boards.txt
+...
+
+nano328.name=Arduino Nano w/ ATmega328
+
+nano328.upload.protocol=arduino
+nano328.upload.maximum_size=30720
+nano328.upload.speed=57600
+
+nano328.bootloader.low_fuses=0xFF
+nano328.bootloader.high_fuses=0xDA
+nano328.bootloader.extended_fuses=0xfd
+nano328.bootloader.path=atmega
+nano328.bootloader.file=ATmegaBOOT_168_atmega328.hex
+nano328.bootloader.unlock_bits=0xff
+nano328.bootloader.lock_bits=0xcf
+
+nano328.build.mcu=atmega328p
+nano328.build.f_cpu=16000000L
+nano328.build.core=arduino
+nano328.build.variant=eightanaloginputs
+...
+
+Видим, что прописаны lockbits
