@@ -22,7 +22,7 @@
   http://www.arduino.cc/en/Tutorial/Blink
 */
 
-#define DURATION 125
+#define DURATION 500
 
 // the setup function runs once when you press reset or power the board
 void setup() {
