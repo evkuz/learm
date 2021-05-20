@@ -15,4 +15,6 @@
 !/get_box_02/
 !/get_box_02/*
 !Makefile
+!learm*
+!learm*/*.*
 
