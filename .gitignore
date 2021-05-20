@@ -1,5 +1,7 @@
 *
 !*.*
+!/include/
+!/include/*.*
 !/get_box/
 !/get_box/*
 !/get_box_01/

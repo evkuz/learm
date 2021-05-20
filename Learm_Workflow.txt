@@ -10,6 +10,39 @@ https://ph0en1x.net/108-avr-c-source-modules-compilation-makefile-howto-linux.ht
 original_fuses.txt
 НАдо будет прописать фьюз для eeprom, чтобы память не стиралась каждый раз при заливке, т.к. имеет ограниченное число циклов перезаписи.
 
+Считал фьюзы с платы NANO(НЕ Old Bootloader) и они отличаются от платы, купленной в MCU store
+
+# avrdude -p m328p -c usbasp -P usb -n
+
+avrdude: AVR device initialized and ready to accept instructions
+
+Reading | ################################################## | 100% 0.00s
+
+avrdude: Device signature = 0x1e950f (probably m328p)
+
+avrdude: safemode: Fuses OK (E:FD, H:DA, L:FF)
+
+avrdude done.  Thank you.
+
+root@EvKuz-Ub-406b:/home/evkuz# avrdude -p m328p -c usbasp -P usb -n
+
+avrdude: AVR device initialized and ready to accept instructions
+
+Reading | ################################################## | 100% 0.00s
+
+avrdude: Device signature = 0x1e950f (probably m328p)
+
+avrdude: safemode: Fuses OK (E:FD, H:DE, L:FF)
+
+avrdude done.  Thank you.
+============================================
+Видим, что здесь H = DE, вместо H = DA
+
+E = 1110
+A = 1010
+
+Разница в размере области загрузки.
+
 
 //++++++++++++++++++++++++
 14.05.2021

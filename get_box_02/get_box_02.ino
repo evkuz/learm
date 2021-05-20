@@ -274,11 +274,11 @@ void get_all_servos(void)
     {
 
       current_s[i] = servos[i].read();
- /*     message = "Current servo ";
+      message = "Current servo ";
       message += String(i); message += " position ";
       message += String(current_s[i]); //servos[i].read()
       Serial.println(message);
-*/
+
     }
 }
 
