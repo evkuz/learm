@@ -11,6 +11,11 @@
 #include "/home/evkuz/lit/learm/include/hiwonder.h"
 
 #include <stdlib.h>
+#include "Parser.h"
+
+#include "AsyncStream.h"  // асинхронное чтение сериал
+AsyncStream<50> serial(&Serial, ';');   // указываем обработчик и стоп символ
+
 
 #define serv_number 6 // Количество приводов под управлением
 
@@ -38,7 +43,7 @@ void setup() {
   for (int i=0; i<= serv_number -1; i++)  { servos[i].attach(i+2), 500, 2500; }
   move_servo_together(hwr_Start_position);
   delay(1000);
-  get_all_servos();
+  //get_all_servos();
   //delay(10000);
   //delay(1500);
 
@@ -47,16 +52,21 @@ void setup() {
 void loop() {
 
 int inByte;
-
+parse_command();
+/*
     if (Serial.available() > 0) {
 
         // get incoming byte:
 
         inByte = Serial.read();
+        Serial.print("NANO received: ");
+        Serial.println(inByte, DEC);
 
-    clamp();
+
+   // clamp();
     delay(1500);
     }
+    */
 
 /*  move_servo_together(sit_down_position);
   delay(1500);
@@ -73,7 +83,7 @@ void to_fix_position (*pos)
 Перейти в позицию из набора фиксированных.
 параметр - указатель на массив значений углов приводов.
 */
-void to_fix_position(byte *pos) { for (int i=0; i<= serv_number -1; i++) { servos[i].write(pos[i]); delay(15); }
+void to_fix_position(int *pos) { for (int i=0; i<= serv_number -1; i++) { servos[i].write(pos[i]); delay(15); }
 }
 
 //++++++++++++++++++++++++++++++++++ start 
@@ -196,7 +206,7 @@ void get_all_servos(void)
 /*
   Задаем значения приращения угла и направление для всех приводов для текущей и целевой позиции
 */
-void get_curr_delta (byte *pos)
+void get_curr_delta (int *pos)
 {
 
   for (int i=0; i<=serv_number -1; i++)
@@ -225,7 +235,7 @@ void get_curr_delta (byte *pos)
 А внутри перебираем все приводы - каждый со своей дельтой.
 Берем снова самое большое и т.д.
 */
-void move_servo_together (byte *pos) // address of position array and direction flag array, текущую позицию вычисляем
+void move_servo_together (int *pos) // address of position array and direction flag array, текущую позицию вычисляем
 {
   byte s_pos, maxdt, counter;
   String message;
@@ -299,13 +309,16 @@ byte get_max_delta (byte *arr)
   return index;
 } //get_max_delta
 //++++++++++++++++++++++++++
-void parse_command (int *command)
+void parse_command ()
 {
-    String message;
-    int data;
+    if (serial.available()) {
+      Parser data(serial.buf, ',');  // отдаём парсеру
+      int ints[6];           // массив для численных данных, у нас 6 приводов
+      data.parseInts(ints);   // парсим в него
 
-    data = command[0];
-    
+      move_servo_together(ints);
+    }//if (serial.available())
+ /*
     switch (data) {
 
     case 0x55:
@@ -316,7 +329,7 @@ void parse_command (int *command)
         Serial.println(message);
        
     }
-
+*/
 
 }//parse_command
 
