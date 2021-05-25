@@ -1,4 +1,9 @@
 /*
+ * learm_03.ino
+ * Двигаемся дальше. Добавляем фиксированные команды.
+ * Т.е. из начального положения - взять предмет и переместить.
+ * Обнаружилась проблема с парсером строки, приходящей из ПК.
+ * Перехожу к следующему проекту, чтобы этот сохранился.
  *
  * learm_02.ino
  * Настриваем прием, парсинг и выполнение команд от serial порта. [сделано 24.05.2021]
@@ -12,7 +17,7 @@
 #include "/home/evkuz/lit/learm/include/hiwonder.h"
 
 #include <stdlib.h>
-#include "Parser.h"
+#include "/home/evkuz/lit/learm/include/Parser.h"
 
 #include "AsyncStream.h"  // асинхронное чтение сериал
 AsyncStream<50> serial(&Serial, ';');   // указываем обработчик и стоп символ
@@ -26,6 +31,7 @@ Servo servos [6] = {servo1, servo2, servo3,servo4,servo5,servo6};
 int S4_pos, S5_pos;
 int *s1, *s2, *s3, *s4, *s5, *s6;
 byte current_s [6]; // Текущее значение угла для соответстующего привода 0-180
+byte target_pos[6];
 byte delta [6];     // Разница (между текущим и целевым положением) в угле для соответствующего привода 0 - 180
 //String message, number;//, s_pos;
 char *s_pos;
@@ -191,16 +197,16 @@ void horse_stand(void)
 void get_all_servos(void)
 {
     String message;
+    message = "From robot after get_all_servo  :  ";
     for (int i=0; i<=serv_number - 1; i++)
     {
 
-      current_s[i] = servos[i].read();
-      message = "Current servo ";
-      message += String(i); message += " position ";
-      message += String(current_s[i]); //servos[i].read()
-      Serial.println(message);
-
+      current_s[i] = servos[i].read(); //Current servo
+        //  message += String(i); message += " position ";
+      message += String(current_s[i]);  message += ", ";
+    //
     }
+    Serial.println(message);
 }//get_all_servos()
 
 //+++++++++++++++++++++++++++++++++++
@@ -283,6 +289,12 @@ while (maxdt != 100) // Перебираем дельты с наибольши�
 
 }//while (maxdt != 100)
 
+// Посылаем текущие позиции после завершения движений.
+get_all_servos();
+/*
+И вот тут надо бы сравнить, что пришло и что сейчас.
+*/
+
 }//move_servo_together
 
 //++++++++++++++++++++
@@ -312,13 +324,26 @@ byte get_max_delta (byte *arr)
 //++++++++++++++++++++++++++
 void parse_command ()
 {
+    String message;
     if (serial.available()) {
       Parser data(serial.buf, ',');  // отдаём парсеру
       int ints[6];           // массив для численных данных, у нас 6 приводов
       data.parseInts(ints);   // парсим в него
 
+      message = "Robot just got data : ";
+      for (int i=0; i<=5; i++)
+      {          message += String(ints[i]); message += ", ";
+
+      }
+      Serial.println(message);
+
       move_servo_together(ints);
+      /*Now send current servo data to PC*/
+     // get_all_servos();
+
     }//if (serial.available())
+
+
  /*
     switch (data) {
 
