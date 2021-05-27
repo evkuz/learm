@@ -25,6 +25,7 @@
 
 
 #define serv_number 6 // Количество приводов под управлением
+#define sBufSize 64   // Размер буфера компорта в плате NANO - 64 байта.
 
 Servo servo1, servo2, servo3,servo4,servo5,servo6;
 Servo servos [6] = {servo1, servo2, servo3,servo4,servo5,servo6};
@@ -69,7 +70,7 @@ parse_command();
         inByte = Serial.read();
         Serial.print("NANO received: ");
         Serial.println(inByte, DEC);
-
+        Serial.flush();
 
    // clamp();
     delay(1500);
@@ -194,11 +195,12 @@ void horse_stand(void)
 //++++++++++++++++++++++++++++++++++++++++++++++++
 /*
 Получить значения углов для всех приводов
+параметр when означает - ДО начала движения и В КОНЦЕ движения
 */
-void get_all_servos(void)
+void get_all_servos(String when)
 {
     String message;
-    message = "From robot after get_all_servo  :  ";
+    message = "From robot "; message += when; message += " get_all_servo  :  ";
     for (int i=0; i<=serv_number - 1; i++)
     {
 
@@ -207,7 +209,8 @@ void get_all_servos(void)
       message += String(current_s[i]);  message += ", ";
     //
     }
-    Serial.println(message);
+  //  Serial.println(message);
+  //  Serial.flush();
 }//get_all_servos()
 
 //+++++++++++++++++++++++++++++++++++
@@ -247,21 +250,23 @@ void move_servo_together (byte *pos) // address of position array and direction 
 {
   byte s_pos, maxdt, counter;
   String message;
-  get_all_servos();
+  get_all_servos("before");
   get_curr_delta(pos);
   maxdt = get_max_delta(delta); // индекс в массиве delta, а не абсолютное значение/
 /*  message = "Servo index with max delta is ";
   message += String(maxdt);
   Serial.println(message);
+  Serial.flush();
 
   message = "Max delta value is ";
   message += String(delta[maxdt]);
 
   Serial.println(message);
-
+  Serial.flush();
   message = "Delta values are : ";
   for (byte i=0; i<= serv_number -1; i++){ message += String(DF[i]); message += ", ";}
   Serial.println(message);
+  Serial.flush();
 */
 while (maxdt != 100) // Перебираем дельты с наибольшим значением пока таковое не станет нулевым.
 {
@@ -271,6 +276,7 @@ while (maxdt != 100) // Перебираем дельты с наибольши�
 /*     message = "Current Max delta value is ";
      message += String(delta[maxdt]);
      Serial.println(message);
+     Serial.flush();
 */
      for (byte i=0; i<=serv_number -1; i++) // ОБходим все приводы
        {
@@ -291,7 +297,7 @@ while (maxdt != 100) // Перебираем дельты с наибольши�
 }//while (maxdt != 100)
 
 // Посылаем текущие позиции после завершения движений.
-get_all_servos();
+get_all_servos("after");
 /*
 И вот тут надо бы сравнить, что пришло и что сейчас.
 */
@@ -336,7 +342,9 @@ void parse_command ()
       {          message += String(ints[i]); message += ", ";
 
       }
+      message.remove(message.length()-2);
       Serial.println(message);
+      Serial.flush();
 
       move_servo_together(ints);
       /*Now send current servo data to PC*/
@@ -354,7 +362,7 @@ void parse_command ()
     default:
         message = "Wrong data !!!";
         Serial.println(message);
-       
+        Serial.flush();
     }
 */
 
