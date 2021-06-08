@@ -19,7 +19,9 @@
 */
 
 #include <Servo.h>
-#include "/home/evkuz/lit/learm/include/hiwonder_byte.h"
+#include "/home/evkuz/0_arduino/include/hiwonder_byte.h"
+//lit/learm/
+
 // /home/evkuz/lit/learm/
 /// //../include/hiwonder_byte.h
 #include <stdlib.h>
@@ -31,7 +33,7 @@
 Servo servo1, servo2, servo3,servo4,servo5,servo6;
 Servo servos [6] = {servo1, servo2, servo3,servo4,servo5,servo6};
 
-int S4_pos, S5_pos;
+
 int *s1, *s2, *s3, *s4, *s5, *s6;
 byte current_s [6]; // Текущее значение угла для соответстующего привода 0-180
 byte readed_pos[6];
@@ -53,15 +55,26 @@ void setup() {
     }
 // attach servos to correspondent pin
   for (int i=0; i<= serv_number -1; i++)  { servos[i].attach(i+2), 500, 2500; }
+<<<<<<< HEAD
+  move_servo_together(hwr_Start_position);
+  delay(1000);
+
+=======
   for (byte i=0; i<= 63; i++){
       ints[i] = 93;
   }
+>>>>>>> 840c33de2b572b42a54e53395fb1a85157287b93
 }
 //++++++++++++++++++++++++ loop 
 void loop() {
 
 int inByte;
 parse_command();
+<<<<<<< HEAD
+
+
+
+=======
 
 /*
     if (Serial.available() > 0) {
@@ -75,6 +88,7 @@ parse_command();
 
     }
 */
+>>>>>>> 840c33de2b572b42a54e53395fb1a85157287b93
 }//loop
 //+++++++++++++++++++++++++++++++++++ to_fix_position(byte *pos)
 /*
@@ -90,99 +104,7 @@ void to_fix_position(byte *pos) { for (int i=0; i<= serv_number -1; i++) { servo
 // и на основании этого вычисляла количество шагов, чтобы было плавное 
 // позиционирование в начальную позицию.
 void start_pozition() { to_fix_position(hwr_Start_position); }//start_pozition
-//+++++++++++++++++++++++++++ sit_down
-//Присаживаем. Предположительно из начальной позиции
-// Пример плавного передвижения. Два привода двигаются одновременно.
-void sit_down_pozition(int s4_pos, int s5_pos)
-{
-  int i;
-
-  for (int i = 0; i <= 44; i++) {
-    s5_pos -= 1;  s4_pos -= 1;
-    servo5.write(s5_pos); delay(15);
-    servo4.write(s4_pos); delay(15);
-    
-  }
-
-}//sit_down_pozition(
 //+++++++++++++++++++++++++++++++++++
-  /* Прибавляем градус по 1 45 раз.
-  Предполагается, что встаем из сидячего положения 
-  */
-void stand_up_pozition(int s4_pos, int s5_pos)
-{
-  int i;
-  
-
-  for (int i = 0; i <= 44; i++) {
-    s5_pos += 1; 
-    s4_pos += 1;
-    servo5.write(s5_pos);
-    delay(15);
-    servo4.write(s4_pos);
-    delay(15);
-  }
-
-}//stand_up_pozition
-
-//++++++++++++++++++++++
-/* Клацаем захватом
-*/
-void clamp () //int clamp_angle
-{
-  int clamp_cur;
-  servo1.write(45);
-  delay(1500);
-  servo1.write(180);
-  delay(1500);
-/*
-  clamp_cur = clamp_angle;
-  if (clamp_cur <60)
-    {
-      servo1.write(60);
-      delay(1500);
-      servo1.write(180);
-      }
-   else {
-         servo3.write(180); 
-         delay(1500);   
-   }
-*/  
-  }
-//+++++++++++++++++++++++++++++++
-/* Принимаем позу шахматного коня 
-*/
-void horse_stand(void)
-{
-  int i;
-  int s3_pos;
-
-  s3_pos=servo3.read();
-  for (int i = 0; i <= 89; i++) {
-  
-  servo3.write(s3_pos -i);
-  delay(10);
-  }//for
-  delay(1500);
-  //++++++++ go back
-/*  s3_pos=servo3.read();
-   for (int i = 0; i <= 89; i++) {
-  
-  servo3.write(s3_pos +i);
-  delay(10);
-  }//for
-   delay(1500);
- //++++++++++++++++++ More angulation
- 
-   s3_pos=servo3.read();
-   for (int i = 0; i <= 89; i++) {
-  
-  servo3.write(s3_pos +i);
-  delay(10);
-  }//for
-*/
-  } // horse_stand()
-//++++++++++++++++++++++++++++++++++++++++++++++++
 /*
 Получить значения углов для всех приводов
 параметр when означает - ДО начала движения и В КОНЦЕ движения
@@ -241,7 +163,7 @@ void move_servo_together (byte *pos, byte numBytes) // address of position array
 {
   byte s_pos, maxdt, counter;
   String message;
-  get_all_servos("before");
+  get_all_servos("before"); //Получаем массив current_s[]
   get_curr_delta(pos);
   maxdt = get_max_delta(delta); // индекс в массиве delta, а не абсолютное значение/
 /*  message = "Servo index with max delta is ";
@@ -382,8 +304,7 @@ void parse_command ()
 
     }//if (serial.available())
 
-
- /*
+/*
     switch (data) {
 
     case 0x55:
@@ -395,7 +316,6 @@ void parse_command ()
         Serial.flush();
     }
 */
-
 }//parse_command
 
 //+++++++++++++++++++++++++++++
