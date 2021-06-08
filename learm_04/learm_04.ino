@@ -20,7 +20,8 @@
 
 #include <Servo.h>
 #include "/home/evkuz/lit/learm/include/hiwonder_byte.h"
-
+// /home/evkuz/lit/learm/
+/// //../include/hiwonder_byte.h
 #include <stdlib.h>
 
 
@@ -33,16 +34,18 @@ Servo servos [6] = {servo1, servo2, servo3,servo4,servo5,servo6};
 int S4_pos, S5_pos;
 int *s1, *s2, *s3, *s4, *s5, *s6;
 byte current_s [6]; // Текущее значение угла для соответстующего привода 0-180
-byte target_pos[6];
+byte readed_pos[6];
 byte delta [6];     // Разница (между текущим и целевым положением) в угле для соответствующего привода 0 - 180
 //String message, number;//, s_pos;
 char *s_pos;
 
 int inByte; // Данные, полученные по serial
+byte ints[64];
 
 //++++++++++++++++++++++++ setup
 void setup() {
   Serial.begin(115200);
+  Serial.setTimeout(1000);
   while (!Serial) {
 
       ; // wait for serial port to connect. Needed for native USB port only
@@ -50,18 +53,16 @@ void setup() {
     }
 // attach servos to correspondent pin
   for (int i=0; i<= serv_number -1; i++)  { servos[i].attach(i+2), 500, 2500; }
-  move_servo_together(hwr_Start_position);
-  delay(1000);
-  //get_all_servos();
-  //delay(10000);
-  //delay(1500);
-
+  for (byte i=0; i<= 63; i++){
+      ints[i] = 93;
+  }
 }
 //++++++++++++++++++++++++ loop 
 void loop() {
 
 int inByte;
 parse_command();
+
 /*
     if (Serial.available() > 0) {
 
@@ -72,19 +73,8 @@ parse_command();
         Serial.println(inByte, DEC);
         Serial.flush();
 
-   // clamp();
-    delay(1500);
     }
-    */
-
-/*  move_servo_together(sit_down_position);
-  delay(1500);
-
-  move_servo_together(hwr_Start_position);
-  delay(1500);
 */
-
-
 }//loop
 //+++++++++++++++++++++++++++++++++++ to_fix_position(byte *pos)
 /*
@@ -205,6 +195,7 @@ void get_all_servos(String when)
     {
 
       current_s[i] = servos[i].read(); //Current servo
+      //readed_pos[i] = current_s[i];
         //  message += String(i); message += " position ";
       message += String(current_s[i]);  message += ", ";
     //
@@ -246,7 +237,7 @@ void get_curr_delta (byte *pos)
 А внутри перебираем все приводы - каждый со своей дельтой.
 Берем снова самое большое и т.д.
 */
-void move_servo_together (byte *pos) // address of position array and direction flag array, текущую позицию вычисляем
+void move_servo_together (byte *pos, byte numBytes) // address of position array and direction flag array, текущую позицию вычисляем
 {
   byte s_pos, maxdt, counter;
   String message;
@@ -269,7 +260,7 @@ void move_servo_together (byte *pos) // address of position array and direction 
   Serial.flush();
 */
 while (maxdt != 100) // Перебираем дельты с наибольшим значением пока таковое не станет нулевым.
-{
+{                    // см. get_max_delta()
     counter = delta[maxdt];
   for (byte dt=0; dt <= counter  -1; dt++) //Берем дельту по индексу из массива
    {
@@ -301,6 +292,30 @@ get_all_servos("after");
 /*
 И вот тут надо бы сравнить, что пришло и что сейчас.
 */
+// Сравниваем массивы
+
+for (byte i=0; i<=serv_number -1; i++){ // ОБходим все приводы
+  if (current_s[i] != pos[i]){
+      message = "Позиция не совпадает с заданной, привод ";
+      message += String(i); message += "\n";
+      message +=  "Задано      "; message += String(pos[i]);
+      message += "Фактическая "; message += String(current_s[i]);
+      Serial.println(message);
+
+  }
+
+}
+
+
+
+message = "Robot got "; message += String(numBytes); message += " bytes and movement DONE!";
+//byte mystrlen = message.length();
+while ( message.length() <=61){
+    message += " ";//String(9);
+    //byte a = 120;
+}
+Serial.println(message);
+//Serial.flush();
 
 }//move_servo_together
 
@@ -332,21 +347,36 @@ byte get_max_delta (byte *arr)
 void parse_command ()
 {
     String message;
+
+    static byte prevAm = 0;
+    static uint32_t tmr = 0;
+    byte am = Serial.available();
+    if (am != prevAm){
+        prevAm = am;
+        tmr = millis();
+    }
+    if ((am & millis() - tmr >10) || am >60){
+        uint32_t us = micros();
+
+
+    }
+
     if (Serial.available()) {
-      byte ints[6];           // массив для численных данных, у нас 6 приводов
+      //byte ints[64];           // массив для численных данных, у нас 6 приводов
       byte numReaded;
       
-      numReaded=Serial.readBytes(ints, 6);
+      numReaded=Serial.readBytes(ints, 64);
+
       message = "Robot just got data : ";
-      for (int i=0; i<=5; i++)
+      for (int i=0; i<=63; i++)
       {          message += String(ints[i]); message += ", ";
 
       }
       message.remove(message.length()-2);
-      Serial.println(message);
-      Serial.flush();
+    //  Serial.println(message);
+      // Serial.flush();
 
-      move_servo_together(ints);
+      move_servo_together(ints, numReaded);
       /*Now send current servo data to PC*/
      // get_all_servos();
 
