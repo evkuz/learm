@@ -1,5 +1,7 @@
 *
 !*.*
+!/include/
+!/include/*.*
 !/get_box/
 !/get_box/*
 !/get_box_01/
@@ -13,4 +15,6 @@
 !/get_box_02/
 !/get_box_02/*
 !Makefile
+!learm*
+!learm*/*.*
 

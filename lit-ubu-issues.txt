@@ -1,0 +1,6 @@
+
+/home/evkuz/lit/arduino-1.8.13/hardware/arduino/avr/boards.txt
+
+bootloader file
+arduino-1.8.13/hardware/arduino/avr/bootloaders/optiboot/optiboot_atmega328.hex:i -Ulock:w:0x0F:m
+
