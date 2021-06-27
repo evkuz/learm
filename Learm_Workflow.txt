@@ -3,6 +3,16 @@
 
 https://ph0en1x.net/108-avr-c-source-modules-compilation-makefile-howto-linux.html
 
+
+
+18.06.2021
+Переписал ф-цию
+void move_servo_together (byte *pos, byte start_servo, byte end_servo)
+Чтобы можно было разделить движение робота на 2-3 этапа - так кубик не задевается.
+
+Попутно пришлось переписать ф-цию  get_max_delta(delta, start_servo, end_servo)
+
+Теперь очередь за нейронкой.
 //+++++++++++++++++++++++++
 19.05.2021
 Добавил описание фьюзов в файле

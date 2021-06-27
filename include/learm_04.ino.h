@@ -20,9 +20,8 @@
 
 #include <Servo.h>
 #include "/home/evkuz/0_arduino/include/hiwonder_byte.h"
-//#include "move_servos.h"
-
 ///home/evkuz/0_arduino/include/hiwonder_byte.h
+//lit/learm/
 ///home/evkuz/lit/learm/include/hiwonder_byte.h
 
 // /home/evkuz/lit/learm/
@@ -37,14 +36,108 @@ Servo servo1, servo2, servo3,servo4,servo5,servo6;
 Servo servos [6] = {servo1, servo2, servo3,servo4,servo5,servo6};
 
 
-int *s1, *s2, *s3, *s4, *s5, *s6;
+//int *s1, *s2, *s3, *s4, *s5, *s6;
 byte current_s [6]; // Текущее значение угла для соответстующего привода 0-180
-byte readed_pos[6];
+//byte readed_pos[6];
 byte delta [6];     // Разница (между текущим и целевым положением) в угле для соответствующего привода 0 - 180
 //String message, number;//, s_pos;
-char *s_pos;
 
 byte ints[64]; // Данные, полученные по serial
+char *s_pos;
+//+++++++++++++++++++++++++++++++++++++++++++++++++++
+void move_servo_together (byte *pos, int start_servo, int end_servo) // address of position array and direction flag array, текущую позицию вычисляем
+{
+  byte s_pos, maxdt, counter;
+  String message;
+  get_all_servos("before"); //Получаем массив current_s[]
+  get_curr_delta(pos);      // Получаем массив delta[]
+  maxdt = get_max_delta(delta, start_servo, end_servo); // индекс в массиве delta, а не абсолютное значение/
+  message = "Servo index with max delta is ";
+  message += String(maxdt);
+  Serial.println(message);
+  Serial.flush();
+
+  message = "Max delta value is ";
+  message += String(delta[maxdt]);
+
+  Serial.println(message);
+  Serial.flush();
+ /* message = "Delta values are : ";
+  for (byte i=0; i<= serv_number -1; i++){ message += String(DF[i]); message += ", ";}
+  Serial.println(message);
+  Serial.flush();
+*/
+
+ // message = "Servo overloaded "; Serial.println(message);
+
+  byte cycle_num =0;
+while (maxdt != 100) // Перебираем дельты с наибольшим значением пока таковое не станет нулевым.
+{                    // см. get_max_delta()
+    counter = delta[maxdt];
+  for (byte dt=0; dt <= counter  -1; dt++) //Берем дельту по индексу из массива
+   {
+/*   message = "Current Max delta value is ";
+     message += String(delta[maxdt]);
+     Serial.println(message);
+     Serial.flush();
+*/
+
+     //Сначала проходим приводы 6-4, пауза 1сек. затем отдельно привод 1, и в конце приводы 3-2
+     // if (start_servo == end_servo) {end_servo +=1;}
+     for (int i= (start_servo -1); i<= (end_servo -1); i++) // ОБходим все приводы, но в обратном порядке
+       {                                  // т.е. начинаем с 6-го и далее по убыванию номера привода.
+
+        if (delta[i] !=0)
+        {
+            s_pos = servos[i].read();
+            s_pos = s_pos + DF[i];
+            servos[i].write(s_pos);
+            delta[i] -= 1;
+            delay(10);
+        }
+    }//for int i=0 // все приводы
+
+  }//for byte dt=0; // вся текущая макс. дельта
+    // Обошли все приводы. Определяем новое значение maxdt
+    maxdt = get_max_delta(delta,start_servo, end_servo);
+    cycle_num++;
+
+}//while (maxdt != 100)
+
+// Посылаем текущие позиции после завершения движений.
+get_all_servos("after");
+/*
+И вот тут надо бы сравнить, что пришло и что сейчас.
+*/
+// Сравниваем массивы
+//message += "Main Cycle worked "; message += String(cycle_num); message += " times"; Serial.println(message);
+
+for (byte i=0; i<=serv_number -1; i++){ // ОБходим все приводы, проверяем совпадение позиции с заданной
+  if (current_s[i] != pos[i]){
+      message = "Позиция не совпадает с заданной, привод ";
+      message += String(i); message += "\n";
+      message += "Задано      "; message += String(pos[i]);
+      message += "Фактическая "; message += String(current_s[i]);
+      Serial.println(message);
+
+  }
+
+}
+
+
+
+message = "Robot got ";  message += " bytes and movement DONE!"; //message += String(numBytes);
+byte mystrlen = message.length();
+while ( message.length() <=61){
+    message += " ";//String(9);
+    //byte a = 120;
+}
+Serial.println(message);
+Serial.flush();
+
+}//move_servo_together overloaded_01
+//++++++++++++++++++++++++++++++++++++++++
+
 
 //++++++++++++++++++++++++ setup
 void setup() {
@@ -145,7 +238,11 @@ void get_curr_delta (byte *pos)
 
   }//for
 
-
+String message = "delta[6] = {";
+for (int i=0; i<= 5; i++) {   message += String(delta[i]); message += ", "; }
+message += "}";
+Serial.println(message);
+Serial.flush();
 }//get_curr_delta
 
 //+++++++++++++++++++++++++++++++++++ move_servo_together (byte *pos)
@@ -156,7 +253,6 @@ void get_curr_delta (byte *pos)
 А внутри перебираем все приводы - каждый со своей дельтой.
 Берем снова самое большое и т.д.
 */
-
 //void move_servo_together (byte *pos, byte numBytes) // address of position array and direction flag array, текущую позицию вычисляем
 //{
 //  byte s_pos, maxdt, counter;
@@ -164,21 +260,21 @@ void get_curr_delta (byte *pos)
 //  get_all_servos("before"); //Получаем массив current_s[]
 //  get_curr_delta(pos);      // Получаем значения delta[i]
 //  maxdt = get_max_delta(delta); // индекс в массиве delta, а не абсолютное значение/
-///*  message = "Servo index with max delta is ";
-//  message += String(maxdt);
-//  Serial.println(message);
-//  Serial.flush();
+/*  message = "Servo index with max delta is ";
+  message += String(maxdt);
+  Serial.println(message);
+  Serial.flush();
 
-//  message = "Max delta value is ";
-//  message += String(delta[maxdt]);
+  message = "Max delta value is ";
+  message += String(delta[maxdt]);
 
-//  Serial.println(message);
-//  Serial.flush();
-//  message = "Delta values are : ";
-//  for (byte i=0; i<= serv_number -1; i++){ message += String(DF[i]); message += ", ";}
-//  Serial.println(message);
-//  Serial.flush();
-//*/
+  Serial.println(message);
+  Serial.flush();
+  message = "Delta values are : ";
+  for (byte i=0; i<= serv_number -1; i++){ message += String(DF[i]); message += ", ";}
+  Serial.println(message);
+  Serial.flush();
+*/
 
 //  byte cycle_num =0;
 //while (maxdt != 100) // Перебираем дельты с наибольшим значением пока таковое не станет нулевым.
@@ -186,14 +282,14 @@ void get_curr_delta (byte *pos)
 //    counter = delta[maxdt];
 //  for (byte dt=0; dt <= counter  -1; dt++) //Берем дельту по индексу из массива
 //   {
-///*   message = "Current Max delta value is ";
+//   message = "Current Max delta value is ";
 //     message += String(delta[maxdt]);
 //     Serial.println(message);
 //     Serial.flush();
-//*/
-////serv_number -1
-//     //Сначала проходим приводы 6-4, пауза 1сек. затем отдельно привод 1, и в конце приводы 3-2
-//     for (byte i= 0; i<=5; i++) // ОБходим все приводы, но в обратном порядке
+
+//serv_number -1
+     //Сначала проходим приводы 6-4, пауза 1сек. затем отдельно привод 1, и в конце приводы 3-2
+//     for (int i= 5; i>=0; i--) // ОБходим все приводы, но в обратном порядке
 //       {                                  // т.е. начинаем с 6-го и далее по убыванию номера привода.
 //        s_pos = servos[i].read();
 //        if (delta[i] !=0)
@@ -202,7 +298,9 @@ void get_curr_delta (byte *pos)
 //            servos[i].write(s_pos);
 //            delta[i] -= 1;
 //            delay(10);
+//        //    message = "index value "; message += String(i); Serial.println(message);
 //        }
+           
 //    }//for int i=0 // все приводы
 
 //  }//for byte dt=0; // вся текущая макс. дельта
@@ -212,12 +310,12 @@ void get_curr_delta (byte *pos)
 
 //}//while (maxdt != 100)
 
-//// Посылаем текущие позиции после завершения движений.
+// Посылаем текущие позиции после завершения движений.
 //get_all_servos("after");
-///*
-//И вот тут надо бы сравнить, что пришло и что сейчас.
-//*/
-//// Сравниваем массивы
+/*
+И вот тут надо бы сравнить, что пришло и что сейчас.
+*/
+// Сравниваем массивы
 //message += "Main Cycle worked "; message += String(cycle_num); message += " times";
 
 //for (byte i=0; i<=serv_number -1; i++){ // ОБходим все приводы, проверяем совпадение позиции с заданной
@@ -244,21 +342,28 @@ void get_curr_delta (byte *pos)
 //Serial.flush();
 
 //}//move_servo_together
-
 //+++++++++++++++++++++++++++++++++++++++++++
 /*
  * Перегружаем ф-цию move_servo_together
  * Добавляем параметры byte start_servo, byte end_servo -
  * т.е. выполняем движение не для всех приводов, а для заданных в диапазоне start_servo - end_servo
 */
-//void move_servo_together (byte *pos, byte start_servo, byte end_servo) // address of position array and direction flag array, текущую позицию вычисляем
+//++++++++++++++++++++++++++++++++++++++++++++++
+/*
+ * Перегружаем ф-цию move_servo_together
+ * Добавляем параметры byte single_servo -
+ * т.е. выполняем движение не для всех приводов, а для заданных в диапазоне start_servo - end_servo
+*/
+
+//void move_servo_together (byte *pos, int single_servo) // address of position array and direction flag array, текущую позицию вычисляем
 //{
 //  byte s_pos, maxdt, counter;
 //  String message;
 //  get_all_servos("before"); //Получаем массив current_s[]
 //  get_curr_delta(pos);
 //  maxdt = get_max_delta(delta); // индекс в массиве delta, а не абсолютное значение/
-///*  message = "Servo index with max delta is ";
+
+//  message = "Servo index with max delta is ";
 //  message += String(maxdt);
 //  Serial.println(message);
 //  Serial.flush();
@@ -272,23 +377,28 @@ void get_curr_delta (byte *pos)
 //  for (byte i=0; i<= serv_number -1; i++){ message += String(DF[i]); message += ", ";}
 //  Serial.println(message);
 //  Serial.flush();
-//*/
+
+
+ // message = "Servo overloaded "; Serial.println(message);
 
 //  byte cycle_num =0;
+
+
 //while (maxdt != 100) // Перебираем дельты с наибольшим значением пока таковое не станет нулевым.
 //{                    // см. get_max_delta()
 //    counter = delta[maxdt];
 //  for (byte dt=0; dt <= counter  -1; dt++) //Берем дельту по индексу из массива
 //   {
-///*   message = "Current Max delta value is ";
+//   message = "Current Max delta value is ";
 //     message += String(delta[maxdt]);
 //     Serial.println(message);
 //     Serial.flush();
-//*/
 
-//     //Сначала проходим приводы 6-4, пауза 1сек. затем отдельно привод 1, и в конце приводы 3-2
-//     for (byte i= end_servo -1; i>=start_servo -1; i--) // ОБходим все приводы, но в обратном порядке
+
+     //Сначала проходим приводы 6-4, пауза 1сек. затем отдельно привод 1, и в конце приводы 3-2
+//     for (int i= start_servo -1; i<= end_servo -1; i++) // ОБходим все приводы, но в обратном порядке
 //       {                                  // т.е. начинаем с 6-го и далее по убыванию номера привода.
+//        int i = single_servo;
 //        s_pos = servos[i].read();
 //        if (delta[i] !=0)
 //        {
@@ -306,62 +416,62 @@ void get_curr_delta (byte *pos)
 
 //}//while (maxdt != 100)
 
-//// Посылаем текущие позиции после завершения движений.
+// Посылаем текущие позиции после завершения движений.
 //get_all_servos("after");
-///*
-//И вот тут надо бы сравнить, что пришло и что сейчас.
-//*/
-//// Сравниваем массивы
-//message += "Main Cycle worked "; message += String(cycle_num); message += " times";
+/*
+И вот тут надо бы сравнить, что пришло и что сейчас.
+*/
+// Сравниваем массивы
+//message += "Main Cycle worked "; message += String(cycle_num); message += " times"; Serial.println(message);
 
-//for (byte i=0; i<=serv_number -1; i++){ // ОБходим все приводы, проверяем совпадение позиции с заданной
-//  if (current_s[i] != pos[i]){
-//      message = "Позиция не совпадает с заданной, привод ";
-//      message += String(i); message += "\n";
-//      message += "Задано      "; message += String(pos[i]);
-//      message += "Фактическая "; message += String(current_s[i]);
-//      Serial.println(message);
+/*for (byte i=0; i<=serv_number -1; i++){ // ОБходим все приводы, проверяем совпадение позиции с заданной
+  if (current_s[i] != pos[i]){
+      message = "Позиция не совпадает с заданной, привод ";
+      message += String(i); message += "\n";
+      message += "Задано      "; message += String(pos[i]);
+      message += "Фактическая "; message += String(current_s[i]);
+      Serial.println(message);
 
-//  }
+  }
 
-//}
+}
 
 
 
-//message = "Robot got ";  message += " bytes and movement DONE!"; //message += String(numBytes);
-//byte mystrlen = message.length();
-//while ( message.length() <=61){
-//    message += " ";//String(9);
-//    //byte a = 120;
-//}
-//Serial.println(message);
-//Serial.flush();
+message = "Robot got ";  message += " bytes and movement DONE!"; //message += String(numBytes);
+byte mystrlen = message.length();
+while ( message.length() <=61){
+    message += " ";//String(9);
+    //byte a = 120;
+}
+Serial.println(message);
+Serial.flush();
 
-//}//move_servo_together
+}*///move_servo_together overloaded_02
 //++++++++++++++++++++
 /*Возвращает индекс макисмального элемента в массиве delta*/
-//byte get_max_delta (byte *arr)
-//{
-//  int maxdelta, index;
-//  maxdelta=0;
-//  index=0;
-//  for (int i=0; i<=5; i++)
-//  {
-//    if (arr[i] > maxdelta)
-//    {
-//      maxdelta = arr[i];
-//      index = i;
-//    }
+byte get_max_delta (byte *arr, int start_servo, int end_servo)
+{
+  int maxdelta, index;
+  maxdelta=0;
+  index=0;
+  for (int i=start_servo; i<=end_servo; i++)
+  {
+    if (arr[i] > maxdelta)
+    {
+      maxdelta = arr[i];
+      index = i;
+    }
 
-//  }//for
+  }//for
 
-//  if (maxdelta==0)
-//  { // Перебрали все дельты и все теперь равны 0
-//    index = 100;
-//  }
+  if (maxdelta==0)
+  { // Перебрали все дельты и все теперь равны 0
+    index = 100;
+  }
 
-//  return index;
-//} //get_max_delta
+  return index;
+} //get_max_delta
 //++++++++++++++++++++++++++
 void parse_command ()
 {
@@ -384,19 +494,19 @@ void parse_command ()
       //byte ints[64];           // массив для численных данных, у нас 6 приводов
       byte numReaded;
       
-      numReaded=Serial.readBytes(ints, 65);
+      numReaded=Serial.readBytes(ints, 64);
 
       message = "Robot just got data : ";
-      for (int i=0; i<=64; i++)
+      for (int i=0; i<=63; i++)
       {          message += String(ints[i]); message += ", ";
 
       }
       message.remove(message.length()-2);
-      Serial.println(message);
-      Serial.flush();
+    //  Serial.println(message);
+      // Serial.flush();
 
-      //move_servo_together(ints, numReaded);
-      Go_To_Position(ints);
+     // move_servo_together(ints, numReaded);
+        Go_To_Position(ints);
       /*Now send current servo data to PC*/
      // get_all_servos();
 
@@ -419,38 +529,32 @@ void parse_command ()
 void Go_To_Position(byte *pos)
 {
   String message;
-
- /*
-  * Для позиций у дальнего края надо вводить поправку.
-  * Если серво 5 больше 135, то привод 4 двигаем сначала на половину,
-  * потом открываем захват, и потом уже 4 и 3 приводы до конца.
-
-*/
-    switch (pos[6]) {
-
-    case 0x31: // Движение "Туда"
-        move_servo_together (ints, 4, 6);
-        delay(1000);
-        move_servo_together (ints, 1, 1);
-        delay(1000);
-        move_servo_together (ints, 3, 3);
-        break;
-        
-    case 0x30: // Движение "Обратно"
-        move_servo_together (ints, 3, 3);
-        delay(1000);
-        move_servo_together (ints, 1, 1);
-        delay(1000);
-        move_servo_together (ints, 4, 6);
-        break;
+//  servos[5].write(pos[5]);
+//    delay(500);
+//  servos[4].write(pos[4]);
+//      delay(500);
+//  servos[3].write(pos[3]);
+//        delay(500);
+//  servos[2].write(pos[2]);
+//          delay(500);
+//          servos[1].write(pos[1]);
+//          delay(500);
+//          servos[0].write(pos[0]);
+//          delay(500);
 
 
-    default:
-        message = "Wrong data !!!";
-        Serial.println(message);
-        Serial.flush();
-    }
 
+    move_servo_together (pos, 4, 6);
+    delay(500);
+    move_servo_together (pos, 1, 1);
+    Serial.println(" OK !");
+
+  //   message = "pos[0] values is "; message += String(pos[0]);
+ //Serial.println(message);
+   // servos[0].write(ints[0]);
+   // move_servo_together (pos, 1, 1);
+ //   delay(1000);
+   // move_servo_together (pos, 3, 3);
 
     
 }
